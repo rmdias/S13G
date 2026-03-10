@@ -31,16 +31,20 @@ echo ""
 
 # Check if Docker Compose is available
 echo -e "${BLUE}Checking Docker Compose...${NC}"
-if ! command -v docker-compose &> /dev/null; then
-    echo -e "${RED}❌ docker-compose is not installed.${NC}"
+if command -v docker-compose &> /dev/null; then
+    DOCKER_COMPOSE="docker-compose"
+elif docker compose version &> /dev/null; then
+    DOCKER_COMPOSE="docker compose"
+else
+    echo -e "${RED}❌ Docker Compose is not available. Install Docker Desktop or the docker-compose plugin.${NC}"
     exit 1
 fi
-echo -e "${GREEN}✓ Docker Compose is available${NC}"
+echo -e "${GREEN}✓ Docker Compose is available ($DOCKER_COMPOSE)${NC}"
 echo ""
 
 # Start services
 echo -e "${BLUE}Starting PostgreSQL and RabbitMQ containers...${NC}"
-docker-compose up -d
+$DOCKER_COMPOSE up -d
 echo -e "${GREEN}✓ Containers started${NC}"
 echo ""
 
@@ -121,7 +125,7 @@ echo -e "${BLUE}Next steps:${NC}"
 echo "1. Start the API:"
 echo "   cd src/Api && dotnet run"
 echo ""
-echo "2. API will be available at: https://localhost:5001"
-echo "3. Swagger UI: https://localhost:5001/swagger"
+echo "2. API will be available at: http://localhost:5000"
+echo "3. Swagger UI: http://localhost:5000/swagger"
 echo ""
 echo -e "${GREEN}✓ Setup complete!${NC}"
