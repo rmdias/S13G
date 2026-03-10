@@ -78,19 +78,20 @@ Write-Host ""
 Write-Host "Waiting for PostgreSQL to be ready..." -ForegroundColor Blue
 $maxAttempts = 30
 $attempt = 0
+$env:PGPASSWORD = "postgres"
 while ($attempt -lt $maxAttempts) {
-    try {
-        $connection = New-Object System.Data.SqlClient.SqlConnection
-        $connection.ConnectionString = "Host=localhost;Username=postgres;Database=postgres"
-        $connection.Open()
-        $connection.Close()
+    $result = psql -U postgres -d postgres -c "SELECT 1" 2>$null
+    if ($LASTEXITCODE -eq 0) {
         Write-Host "✓ PostgreSQL is ready" -ForegroundColor Green
         break
-    } catch {
-        $attempt++
-        Write-Host "  Waiting... ($attempt/$maxAttempts)" -ForegroundColor Yellow
-        Start-Sleep -Seconds 1
     }
+    $attempt++
+    Write-Host "  Waiting... ($attempt/$maxAttempts)" -ForegroundColor Yellow
+    Start-Sleep -Seconds 1
+}
+if ($attempt -ge $maxAttempts) {
+    Write-Host "❌ PostgreSQL failed to respond after $maxAttempts attempts" -ForegroundColor Red
+    exit 1
 }
 Write-Host ""
 
@@ -124,9 +125,27 @@ Write-Host ""
 
 # Apply migrations
 Write-Host "Applying database migrations..." -ForegroundColor Blue
-Set-Location src/Api
-$env:PGPASSWORD = "postgres"
-dotnet ef database update
+
+# Ensure dotnet-ef global tool is installed at a compatible version
+$requiredEfVersion = "9.0.3"
+$efInstalled = dotnet ef --version 2>$null
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Installing dotnet-ef $requiredEfVersion..." -ForegroundColor Yellow
+    dotnet tool install --global dotnet-ef --version $requiredEfVersion
+} elseif (-not $efInstalled.StartsWith("9.")) {
+    Write-Host "Updating dotnet-ef to $requiredEfVersion (found: $efInstalled)..." -ForegroundColor Yellow
+    dotnet tool update --global dotnet-ef --version $requiredEfVersion
+}
+
+$env:DB_USER = "postgres"
+$env:DB_PASS = "postgres"
+Set-Location src/Infrastructure
+dotnet ef database update --project Infrastructure.csproj
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "❌ Migration failed. Check that PostgreSQL is running and accessible." -ForegroundColor Red
+    Set-Location ../..
+    exit 1
+}
 Set-Location ../..
 Write-Host "✓ Migrations applied" -ForegroundColor Green
 Write-Host ""
