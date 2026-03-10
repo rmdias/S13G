@@ -1,0 +1,9 @@
+{
+  "ConnectionStrings": {
+    // Standard setup (postgres user with password):
+    // "DefaultConnection": "Host=localhost;Port=5432;Database=s13g;Username=YOUR_DB_USER;Password=YOUR_DB_PASS"
+
+    // macOS Homebrew (no password — replace YOUR_USERNAME with the output of `whoami`):
+    "DefaultConnection": "Host=localhost;Port=5432;Database=s13g;Username=YOUR_USERNAME"
+  }
+}
