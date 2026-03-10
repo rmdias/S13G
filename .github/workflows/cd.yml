@@ -1,0 +1,28 @@
+name: CD
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Deploy to Render
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Trigger Render deploy
+        run: |
+          curl --silent --show-error --fail \
+            "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+
+      - name: Wait for Render to start
+        run: sleep 30
+
+      - name: Health check
+        run: |
+          curl --silent --show-error --fail \
+            --retry 10 --retry-delay 10 --retry-connrefused \
+            "${{ secrets.RENDER_APP_URL }}/health"
