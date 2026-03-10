@@ -504,6 +504,23 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [CQRS Pattern](https://martinfowler.com/bliki/CQRS.html)
 - [MediatR Documentation](https://github.com/jbogard/MediatR)
 
+## 🌐 Live Environment
+
+The API is deployed and running at:
+
+| Resource | URL |
+|---|---|
+| API Base | https://s13g.onrender.com |
+| Swagger UI | https://s13g.onrender.com/swagger |
+| Health Check | https://s13g.onrender.com/health |
+
+**Infrastructure:**
+- **API**: Render (free tier — cold starts after 15 min of inactivity)
+- **Database**: Render PostgreSQL (free tier)
+- **Message Broker**: CloudAMQP — Little Lemur (free tier)
+
+> First request after a period of inactivity may take ~30–60s due to the free tier cold start.
+
 ## 🆘 Support
 
 For questions or issues, please open an issue on GitHub or contact the development team.</content>
