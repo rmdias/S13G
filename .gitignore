@@ -1,0 +1,52 @@
+## Build outputs
+bin/
+obj/
+
+## Visual Studio / Rider
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## NuGet
+*.nupkg
+*.snupkg
+packages/
+!**/[Pp]ackages/build/
+.nuget/
+
+## .NET
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## Test results
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+coverage*/
+
+## Logs
+*.log
+logs/
+
+## Environment / secrets
+.env
+.env.*
+appsettings.Development.json
+appsettings.Local.json
+
+## macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+## Windows
+Thumbs.db
+Desktop.ini
+
+## JetBrains Rider
+*.sln.iml
