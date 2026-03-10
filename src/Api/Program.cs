@@ -70,16 +70,24 @@ builder.Services.AddValidatorsFromAssemblyContaining<IngestDocumentValidator>();
 // configure connection string with optional environment overrides
 {
     var configConn = builder.Configuration.GetConnectionString("DefaultConnection");
-    var npgsqlBuilder = new Npgsql.NpgsqlConnectionStringBuilder(configConn);
-    // override username/password only when the env vars are explicitly set
     var user = Environment.GetEnvironmentVariable("DB_USER");
-    if (!string.IsNullOrWhiteSpace(user))
-        npgsqlBuilder.Username = user;
     var pass = Environment.GetEnvironmentVariable("DB_PASS");
-    if (!string.IsNullOrWhiteSpace(pass))
-        npgsqlBuilder.Password = pass;
 
-    var finalConn = npgsqlBuilder.ConnectionString;
+    string finalConn;
+    if (!string.IsNullOrWhiteSpace(user) || !string.IsNullOrWhiteSpace(pass))
+    {
+        // only parse with the builder when explicit overrides are needed
+        var npgsqlBuilder = new Npgsql.NpgsqlConnectionStringBuilder(configConn);
+        if (!string.IsNullOrWhiteSpace(user)) npgsqlBuilder.Username = user;
+        if (!string.IsNullOrWhiteSpace(pass)) npgsqlBuilder.Password = pass;
+        finalConn = npgsqlBuilder.ConnectionString;
+    }
+    else
+    {
+        // pass the connection string as-is; Npgsql accepts both key=value and URI formats
+        finalConn = configConn;
+    }
+
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseNpgsql(finalConn));
 }
@@ -100,14 +108,24 @@ builder.Services.AddHostedService<RabbitMqConsumer>();
 // health checks
 {
     var configConn = builder.Configuration.GetConnectionString("DefaultConnection");
-    var npgsqlBuilder = new NpgsqlConnectionStringBuilder(configConn);
     var user = Environment.GetEnvironmentVariable("DB_USER");
-    if (!string.IsNullOrWhiteSpace(user)) npgsqlBuilder.Username = user;
     var pass = Environment.GetEnvironmentVariable("DB_PASS");
-    if (!string.IsNullOrWhiteSpace(pass)) npgsqlBuilder.Password = pass;
+
+    string healthConn;
+    if (!string.IsNullOrWhiteSpace(user) || !string.IsNullOrWhiteSpace(pass))
+    {
+        var npgsqlBuilder = new NpgsqlConnectionStringBuilder(configConn);
+        if (!string.IsNullOrWhiteSpace(user)) npgsqlBuilder.Username = user;
+        if (!string.IsNullOrWhiteSpace(pass)) npgsqlBuilder.Password = pass;
+        healthConn = npgsqlBuilder.ConnectionString;
+    }
+    else
+    {
+        healthConn = configConn;
+    }
 
     builder.Services.AddHealthChecks()
-        .AddCheck("postgresql", new PostgreSqlHealthCheck(npgsqlBuilder.ConnectionString), tags: new[] { "db" })
+        .AddCheck("postgresql", new PostgreSqlHealthCheck(healthConn), tags: new[] { "db" })
         .AddCheck<RabbitMqHealthCheck>("rabbitmq", tags: new[] { "messaging" });
 }
 
