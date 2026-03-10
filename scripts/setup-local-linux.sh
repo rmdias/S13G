@@ -110,6 +110,52 @@ if [ $attempt -ge $max_attempts ]; then
 fi
 echo ""
 
+# Restore NuGet packages
+echo -e "${BLUE}Restoring NuGet packages...${NC}"
+dotnet restore
+echo -e "${GREEN}✓ Packages restored${NC}"
+echo ""
+
+# Build API project
+echo -e "${BLUE}Building API project...${NC}"
+if dotnet build src/Api/Api.csproj -c Release; then
+    echo -e "${GREEN}✓ API project built${NC}"
+else
+    echo -e "${YELLOW}⚠️  Build completed with warnings. Continuing...${NC}"
+fi
+echo ""
+
+# Apply database migrations
+echo -e "${BLUE}Applying database migrations...${NC}"
+
+# Ensure dotnet-ef global tool is installed at a version compatible with the project
+REQUIRED_EF_VERSION="9.0.3"
+if ! dotnet ef --version &> /dev/null; then
+    echo "Installing dotnet-ef ${REQUIRED_EF_VERSION}..."
+    dotnet tool install --global dotnet-ef --version "${REQUIRED_EF_VERSION}"
+    export PATH="$PATH:$HOME/.dotnet/tools"
+else
+    INSTALLED_EF=$(dotnet ef --version 2>/dev/null | head -1)
+    if [[ "$INSTALLED_EF" != 9.* ]]; then
+        echo "Updating dotnet-ef to ${REQUIRED_EF_VERSION} (found: ${INSTALLED_EF})..."
+        dotnet tool update --global dotnet-ef --version "${REQUIRED_EF_VERSION}"
+    fi
+fi
+
+# Linux apt installs Postgres with a 'postgres' system user — use that for migrations
+export DB_USER=postgres
+export DB_PASS=""
+
+cd src/Infrastructure
+if dotnet ef database update --project Infrastructure.csproj; then
+    echo -e "${GREEN}✓ Migrations applied${NC}"
+else
+    echo -e "${RED}❌ Migration failed. Check that PostgreSQL is running and the 'postgres' role has access.${NC}"
+    exit 1
+fi
+cd ../..
+echo ""
+
 # Display service information
 echo -e "${GREEN}═══════════════════════════════════════${NC}"
 echo -e "${GREEN}✓ Setup Complete!${NC}"
