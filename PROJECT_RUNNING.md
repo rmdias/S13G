@@ -80,6 +80,9 @@ cd src/Api && dotnet run
 # Returns OpenAPI spec — works without database
 curl http://localhost:5000/swagger/v1/swagger.json
 
+# Health check — reports postgresql and rabbitmq status
+curl http://localhost:5000/health
+
 # Open Swagger UI (macOS)
 open http://localhost:5000/swagger
 
@@ -110,6 +113,13 @@ cd src/Api && dotnet run
 
 > On macOS Homebrew installations, Postgres defaults to the current OS user with no password.
 > `setup-local-macos.sh` handles this automatically by setting `DB_USER=$(whoami)`.
+>
+> For a permanent local override, create `src/Api/appsettings.Development.json` (gitignored)
+> with your connection string. A template is provided at
+> `src/Api/appsettings.Development.json.example` — copy it and fill in your values.
+> `launchSettings.json` sets `ASPNETCORE_ENVIRONMENT=Development` automatically when
+> running via `dotnet run`, so the file is picked up without any extra environment variable
+> configuration.
 
 ### RabbitMQ
 
