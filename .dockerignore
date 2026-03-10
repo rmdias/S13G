@@ -1,0 +1,17 @@
+**/.vs
+**/.idea
+**/bin
+**/obj
+**/*.user
+
+.git
+.github
+tests/
+scripts/
+sample_XML/
+docker-compose.yml
+get-docker.sh
+
+*.md
+.env
+.env.*
