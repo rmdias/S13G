@@ -21,15 +21,16 @@ using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// explicitly configure Kestrel to listen on both HTTP and HTTPS localhost ports
-builder.WebHost.ConfigureKestrel(options =>
+// In development, bind to localhost only. In all other environments,
+// ASPNETCORE_URLS controls the address (e.g. http://+:10000 on Render).
+if (builder.Environment.IsDevelopment())
 {
-    options.ListenLocalhost(5000); // http
-    options.ListenLocalhost(5001, listenOptions =>
+    builder.WebHost.ConfigureKestrel(options =>
     {
-        listenOptions.UseHttps(); // requires a dev certificate
+        options.ListenLocalhost(5000);
+        options.ListenLocalhost(5001, listenOptions => listenOptions.UseHttps());
     });
-});
+}
 
 // configuration
 builder.Services.AddControllers()
@@ -70,11 +71,10 @@ builder.Services.AddValidatorsFromAssemblyContaining<IngestDocumentValidator>();
 {
     var configConn = builder.Configuration.GetConnectionString("DefaultConnection");
     var npgsqlBuilder = new Npgsql.NpgsqlConnectionStringBuilder(configConn);
-    // prefer DB_USER env var, fall back to current OS user (Homebrew default)
+    // override username/password only when the env vars are explicitly set
     var user = Environment.GetEnvironmentVariable("DB_USER");
-    if (string.IsNullOrWhiteSpace(user))
-        user = Environment.UserName;
-    npgsqlBuilder.Username = user;
+    if (!string.IsNullOrWhiteSpace(user))
+        npgsqlBuilder.Username = user;
     var pass = Environment.GetEnvironmentVariable("DB_PASS");
     if (!string.IsNullOrWhiteSpace(pass))
         npgsqlBuilder.Password = pass;
@@ -102,8 +102,7 @@ builder.Services.AddHostedService<RabbitMqConsumer>();
     var configConn = builder.Configuration.GetConnectionString("DefaultConnection");
     var npgsqlBuilder = new NpgsqlConnectionStringBuilder(configConn);
     var user = Environment.GetEnvironmentVariable("DB_USER");
-    if (string.IsNullOrWhiteSpace(user)) user = Environment.UserName;
-    npgsqlBuilder.Username = user;
+    if (!string.IsNullOrWhiteSpace(user)) npgsqlBuilder.Username = user;
     var pass = Environment.GetEnvironmentVariable("DB_PASS");
     if (!string.IsNullOrWhiteSpace(pass)) npgsqlBuilder.Password = pass;
 
