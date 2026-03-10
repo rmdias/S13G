@@ -210,6 +210,23 @@ fi
 cd ../..
 echo ""
 
+# Create appsettings.Development.json so 'dotnet run' picks up the correct DB user
+APPSETTINGS_DEV="src/Api/appsettings.Development.json"
+if [ ! -f "$APPSETTINGS_DEV" ]; then
+    echo -e "${BLUE}Creating $APPSETTINGS_DEV for local development...${NC}"
+    cat > "$APPSETTINGS_DEV" <<EOF
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Port=5432;Database=s13g;Username=$(whoami)"
+  }
+}
+EOF
+    echo -e "${GREEN}✓ $APPSETTINGS_DEV created (Username=$(whoami), no password)${NC}"
+else
+    echo -e "${YELLOW}⚠️  $APPSETTINGS_DEV already exists — skipping (delete it to regenerate)${NC}"
+fi
+echo ""
+
 # Display service information
 echo -e "${GREEN}═══════════════════════════════════════${NC}"
 echo -e "${GREEN}✓ Setup Complete!${NC}"
