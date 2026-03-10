@@ -2,6 +2,25 @@
 
 A robust, event-driven backend system built with ASP.NET Core for processing, storing, and managing Brazilian fiscal XML documents (NFe, CTe, NFSe). The system implements Clean Architecture principles with CQRS patterns, ensuring scalability, maintainability, and reliable event-driven workflows.
 
+## 🌐 Live Environment
+
+The API is deployed and running at:
+
+| Resource | URL |
+|---|---|
+| API Base | https://s13g.onrender.com |
+| Swagger UI | https://s13g.onrender.com/swagger |
+| Health Check | https://s13g.onrender.com/health |
+
+**Infrastructure:**
+- **API**: Render (free tier — cold starts after 15 min of inactivity)
+- **Database**: Render PostgreSQL (free tier)
+- **Message Broker**: CloudAMQP — Little Lemur (free tier)
+
+> First request after a period of inactivity may take ~30–60s due to the free tier cold start.
+
+---
+
 ## 🚀 Features
 
 - **Document Ingestion**: Upload and process Brazilian fiscal XML documents with automatic validation
@@ -121,26 +140,6 @@ brew services start rabbitmq           # Start RabbitMQ
 brew services stop postgresql@15       # Stop DB
 brew services stop rabbitmq            # Stop RabbitMQ
 ```
-
----
-
-## 🔒 Dependency Health
-
-The project targets .NET 10 with several third‑party libraries. Occasionally packages ship with security advisories; you may see warnings during `dotnet build` such as:
-
-```
-warning NU1903: Package 'Npgsql' 8.0.0 has a known high severity vulnerability
-```
-
-To keep dependencies up-to-date:
-
-1. Run `dotnet list package --vulnerable` to see packages with advisories.
-2. Edit the appropriate `.csproj` file(s) and bump the `Version` attribute to a patched release.
-3. Execute `dotnet restore` and rebuild.
-
-The current repository has already been updated to use patched versions and includes explicit references where necessary; you can change them as new fixes are released.
-
----
 
 ---
 
@@ -444,6 +443,22 @@ S13G/
 - **NUnit**: Testing framework
 - **Testcontainers**: Integration test containers
 
+### Dependency Health
+
+The project targets .NET 10 with several third‑party libraries. Occasionally packages ship with security advisories; you may see warnings during `dotnet build` such as:
+
+```
+warning NU1903: Package 'Npgsql' 8.0.0 has a known high severity vulnerability
+```
+
+To keep dependencies up-to-date:
+
+1. Run `dotnet list package --vulnerable` to see packages with advisories.
+2. Edit the appropriate `.csproj` file(s) and bump the `Version` attribute to a patched release.
+3. Execute `dotnet restore` and rebuild.
+
+The current repository has already been updated to use patched versions and includes explicit references where necessary; you can change them as new fixes are released.
+
 ## 🔒 Sensitive Data Handling
 
 | Concern | Approach |
@@ -504,23 +519,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [CQRS Pattern](https://martinfowler.com/bliki/CQRS.html)
 - [MediatR Documentation](https://github.com/jbogard/MediatR)
 
-## 🌐 Live Environment
-
-The API is deployed and running at:
-
-| Resource | URL |
-|---|---|
-| API Base | https://s13g.onrender.com |
-| Swagger UI | https://s13g.onrender.com/swagger |
-| Health Check | https://s13g.onrender.com/health |
-
-**Infrastructure:**
-- **API**: Render (free tier — cold starts after 15 min of inactivity)
-- **Database**: Render PostgreSQL (free tier)
-- **Message Broker**: CloudAMQP — Little Lemur (free tier)
-
-> First request after a period of inactivity may take ~30–60s due to the free tier cold start.
-
 ## 🆘 Support
 
-For questions or issues, please open an issue on GitHub or contact the development team.</content>
+For questions or issues, please open an issue on GitHub or contact the development team.
