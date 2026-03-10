@@ -507,4 +507,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🆘 Support
 
 For questions or issues, please open an issue on GitHub or contact the development team.</content>
-<filePath="filePath">/Users/rodolfodias/Documents/Github/S13G/README.md
