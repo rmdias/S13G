@@ -21,6 +21,30 @@ using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Converts a postgres:// or postgresql:// URI to an Npgsql key=value connection string.
+// NpgsqlConnection does not accept URI format; UseNpgsql does, but health checks use
+// NpgsqlConnection directly, so we normalise once at startup.
+static string ToNpgsqlConnectionString(string connectionString)
+{
+    if (string.IsNullOrWhiteSpace(connectionString)) return connectionString;
+    if (!connectionString.StartsWith("postgres://") && !connectionString.StartsWith("postgresql://"))
+        return connectionString;
+
+    var uri = new Uri(connectionString);
+    var userInfo = uri.UserInfo.Split(':');
+    var npgsql = new NpgsqlConnectionStringBuilder
+    {
+        Host = uri.Host,
+        Port = uri.Port > 0 ? uri.Port : 5432,
+        Database = uri.AbsolutePath.TrimStart('/'),
+        Username = userInfo.Length > 0 ? Uri.UnescapeDataString(userInfo[0]) : null,
+        Password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : null,
+        SslMode = SslMode.Require,
+        TrustServerCertificate = true
+    };
+    return npgsql.ConnectionString;
+}
+
 // In development, bind to localhost only. In all other environments,
 // ASPNETCORE_URLS controls the address (e.g. http://+:10000 on Render).
 if (builder.Environment.IsDevelopment())
@@ -73,19 +97,18 @@ builder.Services.AddValidatorsFromAssemblyContaining<IngestDocumentValidator>();
     var user = Environment.GetEnvironmentVariable("DB_USER");
     var pass = Environment.GetEnvironmentVariable("DB_PASS");
 
+    var normalized = ToNpgsqlConnectionString(configConn);
     string finalConn;
     if (!string.IsNullOrWhiteSpace(user) || !string.IsNullOrWhiteSpace(pass))
     {
-        // only parse with the builder when explicit overrides are needed
-        var npgsqlBuilder = new Npgsql.NpgsqlConnectionStringBuilder(configConn);
+        var npgsqlBuilder = new Npgsql.NpgsqlConnectionStringBuilder(normalized);
         if (!string.IsNullOrWhiteSpace(user)) npgsqlBuilder.Username = user;
         if (!string.IsNullOrWhiteSpace(pass)) npgsqlBuilder.Password = pass;
         finalConn = npgsqlBuilder.ConnectionString;
     }
     else
     {
-        // pass the connection string as-is; Npgsql accepts both key=value and URI formats
-        finalConn = configConn;
+        finalConn = normalized;
     }
 
     builder.Services.AddDbContext<AppDbContext>(options =>
@@ -111,17 +134,18 @@ builder.Services.AddHostedService<RabbitMqConsumer>();
     var user = Environment.GetEnvironmentVariable("DB_USER");
     var pass = Environment.GetEnvironmentVariable("DB_PASS");
 
+    var normalizedHealth = ToNpgsqlConnectionString(configConn);
     string healthConn;
     if (!string.IsNullOrWhiteSpace(user) || !string.IsNullOrWhiteSpace(pass))
     {
-        var npgsqlBuilder = new NpgsqlConnectionStringBuilder(configConn);
+        var npgsqlBuilder = new NpgsqlConnectionStringBuilder(normalizedHealth);
         if (!string.IsNullOrWhiteSpace(user)) npgsqlBuilder.Username = user;
         if (!string.IsNullOrWhiteSpace(pass)) npgsqlBuilder.Password = pass;
         healthConn = npgsqlBuilder.ConnectionString;
     }
     else
     {
-        healthConn = configConn;
+        healthConn = normalizedHealth;
     }
 
     builder.Services.AddHealthChecks()
