@@ -106,6 +106,11 @@ cd src/Api && dotnet run
 
 **Requires:** Docker & Docker Compose
 
+> A `Dockerfile` at the repository root is also used for production deployments
+> (e.g. Render). It targets port `10000` (`ASPNETCORE_URLS=http://+:10000`) which
+> is the default port expected by Render's platform. Local `dotnet run` still uses
+> port `5000` via `launchSettings.json`.
+
 ---
 
 ## **Option B: Local Installation**
@@ -254,6 +259,15 @@ Edit `src/Api/appsettings.json`:
 > to override the username and password without editing the file. On macOS Homebrew
 > setups the database defaults to the current OS user with no password — set
 > `DB_USER=$(whoami)` before running the API.
+>
+> For local development you can also create `src/Api/appsettings.Development.json`
+> (gitignored) with your local connection string. `launchSettings.json` ensures
+> `ASPNETCORE_ENVIRONMENT=Development` is set automatically when using `dotnet run`,
+> so the development overrides are loaded without any extra env var configuration.
+>
+> The API also accepts Render-style PostgreSQL URIs (`postgresql://user:pass@host/db`)
+> in `ConnectionStrings__DefaultConnection` — they are converted to Npgsql key=value
+> format at startup.
 
 #### 5. Apply Database Migrations
 
@@ -385,6 +399,22 @@ Content-Type: application/json
 #### Delete Document
 ```http
 DELETE /documents/{id}
+```
+
+#### Health Check
+```http
+GET /health
+```
+
+Returns a JSON report with the status of `postgresql` and `rabbitmq` services:
+```json
+{
+  "status": "Healthy",
+  "services": {
+    "postgresql": { "status": "Healthy", "error": null },
+    "rabbitmq":   { "status": "Healthy", "error": null }
+  }
+}
 ```
 
 ### Document Types Supported
